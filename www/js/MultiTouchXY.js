@@ -5,6 +5,8 @@ function MultiTouchXY(ctx, props) {
 	
 	this.xvalue = this.min;
 	this.yvalue = this.min;
+    this.zvalue = false;
+    this.sendZValue = (typeof props.sendZValue == "undefined") ? false : props.sendZValue;
 	this.half = (this.width / 8) / 2;
 	this.maxTouches = props.maxTouches > 0 ? props.maxTouches : 1;
 	this.children = new Array();
@@ -69,7 +71,7 @@ function MultiTouchXY(ctx, props) {
 		touch.activeNumber = this.children.length;
         $(touch).text(touch.activeNumber);    
 		this.container.appendChild(touch);
-		//this.changeValue(touch, xPos, yPos);
+		this.changeValue(touch, xPos, yPos, 1);
 	}
 	
 	this.removeTouch = function(touchToRemove) {
@@ -102,7 +104,7 @@ function MultiTouchXY(ctx, props) {
 		touchFound.id = id;
 		touchFound.isActive = true;
 		if(touchFound != null)
-			this.changeValue(touchFound, xPos, yPos);
+			this.changeValue(touchFound, xPos, yPos, 1);
         
         this.lastTouched = touchFound;
 	}
@@ -126,7 +128,7 @@ function MultiTouchXY(ctx, props) {
 					for(var t = 0; t < this.children.length; t++) {
 						_t = this.children[t];
 						if(touch.identifier == _t.id) {
-							this.changeValue(_t, touch.pageX, touch.pageY);
+							this.changeValue(_t, touch.pageX, touch.pageY, 1);
 							eval(this.ontouchmove);
 							break;
 						}
@@ -137,6 +139,7 @@ function MultiTouchXY(ctx, props) {
 					for(var t = 0; t < this.children.length; t++) {
 						_t = this.children[t];
 						if(touch.identifier == _t.id) {
+                            this.changeValue(_t, touch.pageX, touch.pageY, 0);
 							eval(this.ontouchend);
 							if(this.isMomentary) {
 								this.removeTouch(_t);
@@ -151,7 +154,7 @@ function MultiTouchXY(ctx, props) {
 		}
 	}
 	
-	this.changeValue = function(touch, inputX, inputY) {
+	this.changeValue = function(touch, inputX, inputY, inputZ) {
         var xLeft   = inputX - this.half;
         var xRight  = inputX + this.half;
         var yTop    = inputY - this.half;
@@ -203,6 +206,7 @@ function MultiTouchXY(ctx, props) {
 			this.xvalue = Math.round(this.min + (touch.xpercentage * range));
 			this.yvalue = Math.round(this.min + (touch.ypercentage * range));
 		}
+        this.zvalue = inputZ;
         
 		if(this.onvaluechange != null) eval(this.onvaluechange);
 		if(!this.isLocal) this.output(touch);
@@ -258,6 +262,9 @@ function MultiTouchXY(ctx, props) {
               valueString += "/" + touch.activeNumber;
             }
             valueString += ":" + this.xvalue + "," + this.yvalue;
+            if(this.sendZValue){
+                valueString += ","+this.zvalue;
+            }
         }else if(_protocol == "MIDI") {
             var xnum = this.midiNumber + (touch.activeNumber * 2) - 2;
             var ynum = xnum + 1;
